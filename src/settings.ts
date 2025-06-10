@@ -1,41 +1,15 @@
 import LinkRange from "main";
-import { App, PluginSettingTab, Setting, ButtonComponent } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import { postProcessorUpdate } from "./utils";
 
-export interface Pattern {
-	lineVisual: string;
-	lineSeparatorVisual: string;
-	path: string;
-}
-
 export interface LinkRangeSettings {
-	lineSeparator: string;
-	endInclusive: boolean;
-	altFormat: string; // This is for backwards compatibility
+	bibleFolder: string;
 	settingsVersion: string;
-	patterns: [Pattern]
-	bibleReferencesEnabled: boolean;
-	bibleBookPrefix: string;
-	getDefaultPattern() : Pattern
 }
 
 export const DEFAULT_SETTINGS: LinkRangeSettings = {
-	lineSeparator: '..',
-	endInclusive: true,
-	altFormat: '',
-	settingsVersion: 'v3',
-	patterns: [{ lineVisual: ':', lineSeparatorVisual: '-', path: '/' }],
-	bibleReferencesEnabled: false,
-	bibleBookPrefix: '',
-
-	getDefaultPattern() {
-		const first = this.patterns[0];
-		if (!first) {
-			return { lineVisual: ':', lineSeparatorVisual: '-', path: '/' }
-		}
-
-		return first;
-	},
+	bibleFolder: '',
+	settingsVersion: 'v4',
 }
 
 export class LinkRangeSettingTab extends PluginSettingTab {
@@ -48,29 +22,7 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 	}
 
 	migrateOldSettings() {
-		const stgs = this.plugin.settings;
-
-		const hasV1Settings = stgs.altFormat != undefined && stgs.altFormat.length > 0;
-		if (hasV1Settings) {	
-
-			// default altFormat string: `$note:$h1-$h2` (legacy heading format)
-			const altFormat = stgs.altFormat;
-			const indexOfNote = altFormat.indexOf('$note');
-			const indexOfH1 = altFormat.indexOf('$h1');
-			const indexOfH2 = altFormat.indexOf('$h2');
-
-			const formatIsValid = indexOfNote === 0 && indexOfH1 !== -1 && indexOfH2 !== -2;
-			
-			if (formatIsValid) {
-				const firstValue = altFormat.substring('$note'.length, indexOfH1);
-				const secondValue = altFormat.substring(indexOfH1 + '$h1'.length, indexOfH2);
-
-				stgs.patterns = [{ lineVisual: firstValue, lineSeparatorVisual: secondValue, path: '' }]
-			}
-
-			stgs.altFormat = '';
-			this.plugin.saveSettings();
-		}
+		// Settings migration can be removed as this is now Bible-specific
 	}
 
 	display(): void {
@@ -78,128 +30,19 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.createH2('Settings for embed-line-range plugin')
+		this.createH2('Bible Embed Settings')
 
 		new Setting(containerEl)
-			.setName('Line Separator')
-			.setDesc('Defines the separator to be used to define a link line range. Defaults to ".." (e.g. [[Note Name:10..25]])')
+			.setName('Bible Folder Path')
+			.setDesc('Path to the folder containing your Bible books and chapters (e.g., "Bible" for a folder named "Bible")')
 			.addText(text => text
-				.setPlaceholder('Enter a separator string (defaults to ..)')
-				.setValue(this.plugin.settings.lineSeparator)
+				.setPlaceholder('Enter folder path (e.g., "Bible")')
+				.setValue(this.plugin.settings.bibleFolder)
 				.onChange(async (value) => {
-					this.plugin.settings.lineSeparator = value;
+					this.plugin.settings.bibleFolder = value;
 					await this.plugin.saveSettings();
 					postProcessorUpdate(this.app)
 				}));
-
-		new Setting(containerEl)
-			.setName('End Inclusive')
-			.setDesc('Whether or not the end line should be inclusive or exclusive')
-			.addToggle(bool => bool
-				.setValue(this.plugin.settings.endInclusive)
-				.onChange(async (value) => {
-					this.plugin.settings.endInclusive = value;
-					await this.plugin.saveSettings();
-					postProcessorUpdate(this.app)
-				}));
-
-		this.createH2('Bible Reference Settings')
-
-		new Setting(containerEl)
-			.setName('Enable Bible References')
-			.setDesc('Enable parsing of Bible references like "I Peter 1:3-5"')
-			.addToggle(bool => bool
-				.setValue(this.plugin.settings.bibleReferencesEnabled)
-				.onChange(async (value) => {
-					this.plugin.settings.bibleReferencesEnabled = value;
-					await this.plugin.saveSettings();
-					postProcessorUpdate(this.app)
-				}));
-
-		new Setting(containerEl)
-			.setName('Use Numeric Bible Book Prefixes')
-			.setDesc('Enable automatic numeric prefixes for Bible book files based on canonical order (e.g., "60 I Peter.md" for I Peter which is book #60)')
-			.addToggle(bool => bool
-				.setValue(this.plugin.settings.bibleBookPrefix !== '')
-				.onChange(async (value) => {
-					this.plugin.settings.bibleBookPrefix = value ? 'enabled' : '';
-					await this.plugin.saveSettings();
-					postProcessorUpdate(this.app)
-				}));
-	
-		new Setting(this.containerEl)
-			.setName("Add a New Visual Pattern")
-			.setDesc("Add new pattern to match files in a directory. The first value will change the visual for the line prefix in a link. The second value will change the visual for separator. The third specifies the folder in which the files must be to match. The first match, starting bottom up, will be applied. Therefore, the first is the default pattern.")
-			.addButton((button: ButtonComponent) => {
-				button
-					.setTooltip("Add new pattern to match files in a directory.")
-					.setButtonText("+")
-					.setCta()
-					.onClick(() => {
-						this.plugin.settings.patterns.push({
-							lineVisual: '',
-							lineSeparatorVisual: '',
-							path: ''
-						});
-						this.plugin.saveSettings();
-						this.display();
-					});
-			});
-		
-			this.plugin.settings.patterns.forEach(
-				(pattern, index) => {
-					const s = new Setting(this.containerEl)
-					.addText(text => text
-						.setPlaceholder('Enter a line prefix override')
-						.setValue(pattern.lineVisual)
-						.onChange(async (value) => {
-							pattern.lineVisual = value;
-							await this.plugin.saveSettings();
-							postProcessorUpdate(this.app)
-						}))
-					.addText(text => text
-						.setPlaceholder('Enter a separator override')
-						.setValue(pattern.lineSeparatorVisual)
-						.onChange(async (value) => {
-							pattern.lineSeparatorVisual = value;
-							await this.plugin.saveSettings();
-							postProcessorUpdate(this.app)
-						}))
-					.addText(text => text
-						.setPlaceholder(index === 0 ? '(global)' : 'Enter a path')
-						.setValue(pattern.path)
-						.setDisabled(index === 0)
-						.onChange(async (value) => {
-							pattern.path = value;
-							await this.plugin.saveSettings();
-							postProcessorUpdate(this.app)
-						}));
-
-					if (index === 0) {
-						s.addExtraButton((cb) => {
-							cb.setIcon("lock")
-								.setTooltip("This pattern is the default and cannot be completed");					
-						});
-					}
-					else {
-						if (index !== 0) {
-							s.addExtraButton((cb) => {
-								cb.setIcon("cross")
-									.setTooltip("Delete")
-									.onClick(() => {
-										this.plugin.settings.patterns.splice(
-											index,
-											1
-										);
-										this.plugin.saveSettings();
-										this.display();
-									});
-						
-							});
-						}
-					}
-				}
-			);
 	}
 
 	createH2(text: string) {

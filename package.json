@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-embed-line-range",
-	"version": "3.0.1",
-	"description": "This Obsidian plugin brings line range embed and link support to Obsidian. Based on original work by Ryan Mellmer and Eric Sowell.",
+	"name": "obsidian-bible-verse-embedder",
+	"version": "4.0.0",
+	"description": "Embed Bible verses using natural citation syntax like ![[John 3:16]] or ![[I Peter 1:3-5]]. Based on original work by Ryan Mellmer and Eric Sowell.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

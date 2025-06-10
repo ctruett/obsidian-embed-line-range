@@ -1,8 +1,8 @@
-# Obsidian Embed Line Range
+# Bible Verse Embedder
 
-![Obsidian Link Range Logo](https://user-images.githubusercontent.com/23059902/225677761-c36b01a6-6194-4d83-a130-a1d7561b8359.png)
+![Bible Verse Embedder Logo](https://user-images.githubusercontent.com/23059902/225677761-c36b01a6-6194-4d83-a130-a1d7561b8359.png)
 
-This plugin brings wiki-link line range queries to Obsidian while retaining native backlink functionality. Supports standard wiki-links, Bible references, or other user-defined patterns, hover preview, and embedded content wiki-links.
+This plugin allows you to embed Bible verses and passages in your Obsidian notes using natural citation syntax. Simply write `![[John 3:16]]` or `![[I Peter 1:3-5]]` to embed verses directly into your notes.
 
 ## Credits
 
@@ -12,58 +12,69 @@ This plugin is based on the original [Obsidian Link Range](https://github.com/rm
 **Current Maintainer**: [ctruett](https://github.com/ctruett)
 
 ### Major Changes in This Fork
-- Converted from header-based ranges to line-based ranges
-- Changed syntax from `[[Note#Header1..Header2]]` to `[[Note:10..25]]`
-- Added Bible verse reference support (e.g., `![[I Peter 1:3-5]]`)
-- Updated to use `:` separator instead of `#`
+- Simplified to focus exclusively on Bible verse embedding
+- Added natural Bible citation syntax (e.g., `![[I Peter 1:3-5]]`)
+- Removed general line range functionality to streamline for Bible study
+- Added support for all 66 biblical books with canonical numbering
 
 ![demo](./docs/demo-2.gif)
 
 ## Usage
 
-### Line Range Links
-To use, simply use the same wiki-link syntax you're used to in obsidian, but instead of specifying a single line, you can specify a line range separated by a separator string.
-
-For example, if I wanted a link to lines 10 through 25 in a note named "Recipe", I could craft a link like the following:
-
-`[[Recipe:10..25]]`
-
-For a single line:
-
-`[[Recipe:15]]`
-
 ### Bible References
-When Bible references are enabled, you can use natural Bible citation syntax:
+Use natural Bible citation syntax to embed verses and passages:
 
+**Single Verse:**
+`![[John 3:16]]` - Embeds John 3:16
+`[[Romans 8:28]]` - Links to Romans 8:28
+
+**Verse Range:**
 `![[I Peter 1:3-5]]` - Embeds verses 3-5 from I Peter chapter 1
-`[[John 3:16]]` - Links to John 3:16
-`[[II Corinthians 5:17-21|New Creation]]` - Links with custom display text
+`[[Ephesians 2:8-10]]` - Links to Ephesians 2:8-10
 
-This works with folder structures like:
+**With Custom Display Text:**
+`[[John 3:16|God's Love]]` - Links with custom display text
+`![[Romans 8:28-30|The Golden Chain]]` - Embeds with custom title
+
+### Required Folder Structure
+Your Bible files should be organized like this:
 ```
-60 I Peter.md/
-├── Chapter 01.md
-├── Chapter 02.md
+Bible/
+├── 60 I Peter/
+│   ├── Chapter 01.md
+│   ├── Chapter 02.md
+│   └── ...
+├── 43 John/
+│   ├── Chapter 01.md
+│   ├── Chapter 02.md
+│   └── ...
 └── ...
 ```
 
-Where the numeric prefix (60) represents the canonical book order.
+Where:
+- The numeric prefix (60, 43, etc.) represents the canonical book order
+- Each verse should be on its own line in the chapter files
+- Verse 1 = Line 1, Verse 2 = Line 2, etc.
 
-## Basic Settings
+## Settings
 
-The default settings give you the functionality indicated above.
+Only one setting is required:
 
-![default settings](./docs/default-settings.png)
+- **Bible Folder Path**: Path to the folder containing your Bible books and chapters (e.g., "Bible")
 
-### Bible Reference Settings
+The plugin automatically handles:
+- All 66 biblical books with canonical numbering
+- Book name variations (1 Peter → I Peter, etc.)
+- Single verses and verse ranges
+- Custom display text
 
-- **Enable Bible References**: Allows parsing of Bible citations like "I Peter 1:3-5"
-- **Use Numeric Bible Book Prefixes**: Automatically handles files with canonical book numbers (e.g., "60 I Peter.md")
+## Supported Books
 
-## Advanced Settings Choices
+The plugin recognizes all 66 biblical books:
+- **Old Testament** (1-39): Genesis through Malachi
+- **New Testament** (40-66): Matthew through Revelation
 
-If you prefer a different line separator than the default syntax, you may change it.
-
-Some will want to change the visual style of the line separators and prefixes.
-
-![advanced settings](./docs/advanced-settings.png)
+Common abbreviations are automatically converted:
+- `1 Peter` → `I Peter`
+- `2 Corinthians` → `II Corinthians`
+- And similar patterns for other numbered books

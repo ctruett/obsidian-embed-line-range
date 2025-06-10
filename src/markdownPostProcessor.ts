@@ -7,7 +7,7 @@ import { checkLink } from "./utils";
 export function linkRangePostProcessor(app: App, el: HTMLElement, ctx: MarkdownPostProcessorContext, settings: LinkRangeSettings): void {
 	const links = el.querySelectorAll('a.internal-link');
 
-	// Handle links
+	// Handle Bible reference links
 	links.forEach(link => { 
 		const htmlLink = link as HTMLElement
 		const res = checkLink(app, htmlLink, settings);
@@ -16,15 +16,10 @@ export function linkRangePostProcessor(app: App, el: HTMLElement, ctx: MarkdownP
 			if (res.altText) {
 				htmlLink.setText(res.altText)
 			}
-			const lineRef = (res.startLine + 1).toString(); // Convert back to 1-based for display
-			htmlLink.setAttribute("href", res.note + ":" + lineRef);
-			htmlLink.setAttribute("data-href", res.note + ":" + lineRef);
-			if (res.endLine !== undefined) {
-				const endLineRef = (res.endLine + 1).toString(); // Convert back to 1-based for display
-				htmlLink.setAttribute("range-href", res.note + ":" + lineRef + settings.lineSeparator + endLineRef);
-			} else {
-				htmlLink.setAttribute("range-href", res.note + ":" + lineRef);
-			}
+			// For Bible references, keep the original format in href
+			htmlLink.setAttribute("href", res.note);
+			htmlLink.setAttribute("data-href", res.note);
+			htmlLink.setAttribute("range-href", res.note);
 		}
 	});
 
