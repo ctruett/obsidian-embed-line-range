@@ -8,9 +8,18 @@ export interface ParsedLink {
 	endLine?: number;
 	altText?: string;
 	file?: TFile;
+	isBibleReference?: boolean;
 }
 
 export function checkLinkText(href: string, settings: LinkRangeSettings): ParsedLink | null {
+	// First check if it's a Bible reference
+	if (settings.bibleReferencesEnabled) {
+		const bibleRef = parseBibleReference(href, settings);
+		if (bibleRef) {
+			return bibleRef;
+		}
+	}
+
 	const linkRegex = /([^:|]*):\s*([^:|]*)?\|?(.*)?/;
 
 	const matches = linkRegex.exec(href);
@@ -61,6 +70,105 @@ export function checkLinkText(href: string, settings: LinkRangeSettings): Parsed
 	return { note, startLine, endLine, altText }
 }
 
+export function parseBibleReference(href: string, settings: LinkRangeSettings): ParsedLink | null {
+	// Parse Bible references like "I Peter 1:3-5" or "John 3:16"
+	const bibleRegex = /^([^|]*?)\s+(\d+):(\d+)(?:-(\d+))?\|?(.*)?$/;
+	const matches = bibleRegex.exec(href.trim());
+
+	if (!matches) {
+		return null;
+	}
+
+	const bookName = matches[1].trim();
+	const chapter = parseInt(matches[2], 10);
+	const startVerse = parseInt(matches[3], 10);
+	const endVerse = matches[4] ? parseInt(matches[4], 10) : undefined;
+	const customAltText = matches[5];
+
+	// For Bible references, we need to determine which file contains this chapter
+	// and then convert chapter:verse to line numbers within that file
+	const chapterFileName = getBibleChapterFileName(bookName, chapter, settings);
+	if (!chapterFileName) {
+		return null;
+	}
+
+	// Convert verses to line numbers (assuming each verse is one line, starting from line 1)
+	const startLine = startVerse - 1; // Convert to 0-based indexing
+	const endLine = endVerse ? endVerse - 1 : undefined;
+
+	const altText = customAltText || `${bookName} ${chapter}:${startVerse}${endVerse ? `-${endVerse}` : ''}`;
+
+	return {
+		note: chapterFileName,
+		startLine,
+		endLine,
+		altText,
+		isBibleReference: true
+	};
+}
+
+export function getBibleChapterFileName(bookName: string, chapter: number, settings: LinkRangeSettings): string | null {
+	// Normalize the book name and try to find the corresponding chapter file
+	const normalizedBookName = bookName.trim();
+	
+	// Handle common book name variations
+	const bookAliases: { [key: string]: string } = {
+		"1 Peter": "I Peter",
+		"2 Peter": "II Peter", 
+		"1 John": "I John",
+		"2 John": "II John",
+		"3 John": "III John",
+		"1 Corinthians": "I Corinthians",
+		"2 Corinthians": "II Corinthians",
+		"1 Thessalonians": "I Thessalonians",
+		"2 Thessalonians": "II Thessalonians",
+		"1 Timothy": "I Timothy",
+		"2 Timothy": "II Timothy",
+		"1 Kings": "I Kings",
+		"2 Kings": "II Kings",
+		"1 Chronicles": "I Chronicles", 
+		"2 Chronicles": "II Chronicles",
+		"1 Samuel": "I Samuel",
+		"2 Samuel": "II Samuel"
+	};
+
+	const canonicalName = bookAliases[normalizedBookName] || normalizedBookName;
+	
+	// For the folder structure like "60 I Peter.md", "Chapter 01.md", etc.
+	// We need to construct the path to the chapter file within the book folder
+	const bookIndex = getBibleBookIndex(canonicalName);
+	if (bookIndex === null) {
+		return null;
+	}
+	
+	// Format: "60 I Peter/Chapter 01"
+	const chapterNum = chapter.toString().padStart(2, '0');
+	return `${bookIndex} ${canonicalName}/Chapter ${chapterNum}`;
+}
+
+export function getBibleBookIndex(bookName: string): number | null {
+	// Map of canonical book names to their traditional canonical order
+	const bookIndexes: { [key: string]: number } = {
+		"Genesis": 1, "Exodus": 2, "Leviticus": 3, "Numbers": 4, "Deuteronomy": 5,
+		"Joshua": 6, "Judges": 7, "Ruth": 8, "I Samuel": 9, "II Samuel": 10,
+		"I Kings": 11, "II Kings": 12, "I Chronicles": 13, "II Chronicles": 14,
+		"Ezra": 15, "Nehemiah": 16, "Esther": 17, "Job": 18, "Psalms": 19,
+		"Proverbs": 20, "Ecclesiastes": 21, "Song of Solomon": 22, "Isaiah": 23,
+		"Jeremiah": 24, "Lamentations": 25, "Ezekiel": 26, "Daniel": 27,
+		"Hosea": 28, "Joel": 29, "Amos": 30, "Obadiah": 31, "Jonah": 32,
+		"Micah": 33, "Nahum": 34, "Habakkuk": 35, "Zephaniah": 36, "Haggai": 37,
+		"Zechariah": 38, "Malachi": 39, "Matthew": 40, "Mark": 41, "Luke": 42,
+		"John": 43, "Acts": 44, "Romans": 45, "I Corinthians": 46, "II Corinthians": 47,
+		"Galatians": 48, "Ephesians": 49, "Philippians": 50, "Colossians": 51,
+		"I Thessalonians": 52, "II Thessalonians": 53, "I Timothy": 54, "II Timothy": 55,
+		"Titus": 56, "Philemon": 57, "Hebrews": 58, "James": 59, "I Peter": 60,
+		"II Peter": 61, "I John": 62, "II John": 63, "III John": 64, "Jude": 65,
+		"Revelation": 66
+	};
+
+	return bookIndexes[bookName] || null;
+}
+
 export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSettings, isEmbed=false, hrefField = "data-href"): ParsedLink | null {
 	const href = linkHTML.getAttribute(hrefField);
 
@@ -83,6 +191,23 @@ export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSe
 
 	if (!isEmbed && !linkHTML.innerText.includes(res.note)) {
 		res.altText = linkHTML.innerText
+	}
+
+	// Handle Bible references differently
+	if (res.isBibleReference) {
+		const file = findBibleChapterFile(app, res.note, settings);
+		if (!file) {
+			return null;
+		}
+		res.file = file;
+		
+		// For Bible references, assume verses are 1-based and convert to 0-based
+		res.startLine = res.startLine - 1;
+		if (res.endLine !== undefined) {
+			res.endLine = res.endLine - 1;
+		}
+		
+		return res;
 	}
 
 	// Locate the referenced file, including partial paths
@@ -126,6 +251,25 @@ export function postProcessorUpdate(app: App) {
 	}
 
 	app.workspace.updateOptions();
+}
+
+export function findBibleChapterFile(app: App, chapterFileName: string, settings: LinkRangeSettings): TFile | null {
+	// Look for the chapter file in the vault
+	const files = app.vault.getMarkdownFiles();
+	
+	// Try to find exact match first
+	let file = files.find(f => f.path === chapterFileName + ".md");
+	if (file) return file;
+	
+	// Try to find by basename
+	file = files.find(f => f.basename === chapterFileName);
+	if (file) return file;
+	
+	// Try to find within folders (for nested structure)
+	file = files.find(f => f.path.endsWith(chapterFileName + ".md"));
+	if (file) return file;
+	
+	return null;
 }
 
 export function findPatternForFile(fileName: string, settings: LinkRangeSettings) : Pattern {

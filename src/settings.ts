@@ -14,6 +14,8 @@ export interface LinkRangeSettings {
 	altFormat: string; // This is for backwards compatibility
 	settingsVersion: string;
 	patterns: [Pattern]
+	bibleReferencesEnabled: boolean;
+	bibleBookPrefix: string;
 	getDefaultPattern() : Pattern
 }
 
@@ -23,6 +25,8 @@ export const DEFAULT_SETTINGS: LinkRangeSettings = {
 	altFormat: '',
 	settingsVersion: 'v3',
 	patterns: [{ lineVisual: ':', lineSeparatorVisual: '-', path: '/' }],
+	bibleReferencesEnabled: false,
+	bibleBookPrefix: '',
 
 	getDefaultPattern() {
 		const first = this.patterns[0];
@@ -95,6 +99,30 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.endInclusive)
 				.onChange(async (value) => {
 					this.plugin.settings.endInclusive = value;
+					await this.plugin.saveSettings();
+					postProcessorUpdate(this.app)
+				}));
+
+		this.createH2('Bible Reference Settings')
+
+		new Setting(containerEl)
+			.setName('Enable Bible References')
+			.setDesc('Enable parsing of Bible references like "I Peter 1:3-5"')
+			.addToggle(bool => bool
+				.setValue(this.plugin.settings.bibleReferencesEnabled)
+				.onChange(async (value) => {
+					this.plugin.settings.bibleReferencesEnabled = value;
+					await this.plugin.saveSettings();
+					postProcessorUpdate(this.app)
+				}));
+
+		new Setting(containerEl)
+			.setName('Use Numeric Bible Book Prefixes')
+			.setDesc('Enable automatic numeric prefixes for Bible book files based on canonical order (e.g., "60 I Peter.md" for I Peter which is book #60)')
+			.addToggle(bool => bool
+				.setValue(this.plugin.settings.bibleBookPrefix !== '')
+				.onChange(async (value) => {
+					this.plugin.settings.bibleBookPrefix = value ? 'enabled' : '';
 					await this.plugin.saveSettings();
 					postProcessorUpdate(this.app)
 				}));
