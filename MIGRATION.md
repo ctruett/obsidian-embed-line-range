@@ -2,6 +2,15 @@
 
 This document outlines the major changes made to convert the Obsidian Embed Line Range plugin from header-based ranges to line-based ranges.
 
+## Credits
+
+This plugin is based on the original [Obsidian Link Range](https://github.com/rmellmer/obsidian-link-range) plugin by Ryan Mellmer and Eric Sowell.
+
+**Original Authors**: Ryan Mellmer and Eric Sowell  
+**Current Maintainer**: ctruett
+
+The original plugin provided header-based range functionality. This fork has been extensively modified to provide line-based ranges and Bible verse references.
+
 ## Overview
 
 The plugin has been fundamentally changed from targeting header ranges (e.g., `[[Note#Header1..Header2]]`) to line number ranges (e.g., `[[Note#L10..L25]]`). This provides more precise control over which content is included in links and embeds.

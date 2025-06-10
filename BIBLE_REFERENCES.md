@@ -2,6 +2,15 @@
 
 This plugin supports natural Bible reference syntax for linking to and embedding Bible verses.
 
+## Credits
+
+This plugin is based on the original [Obsidian Link Range](https://github.com/rmellmer/obsidian-link-range) plugin by Ryan Mellmer and Eric Sowell.
+
+**Original Authors**: Ryan Mellmer and Eric Sowell  
+**Current Maintainer**: ctruett
+
+The Bible reference functionality is a new feature added to the line-based range system.
+
 ## Overview
 
 When Bible references are enabled, you can use natural citation syntax like `![[I Peter 1:3-5]]` to reference verses in your Bible study notes.

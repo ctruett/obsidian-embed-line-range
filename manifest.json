@@ -1,10 +1,10 @@
 {
 	"id": "embed-line-range",
 	"name": "Embed Line Range",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "This Obsidian plugin brings line range embed and link support to Obsidian.",
-	"author": "Ryan Mellmer and Eric Sowell",
-	"authorUrl": "https://ryanmellmer.com, https://ericsowell.com",
+	"description": "This Obsidian plugin brings line range embed and link support to Obsidian. Based on original work by Ryan Mellmer and Eric Sowell.",
+	"author": "ctruett",
+	"authorUrl": "https://github.com/ctruett",
 	"isDesktopOnly": false
 }

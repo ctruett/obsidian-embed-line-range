@@ -4,6 +4,19 @@
 
 This plugin brings wiki-link line range queries to Obsidian while retaining native backlink functionality. Supports standard wiki-links, Bible references, or other user-defined patterns, hover preview, and embedded content wiki-links.
 
+## Credits
+
+This plugin is based on the original [Obsidian Link Range](https://github.com/rmellmer/obsidian-link-range) plugin by [Ryan Mellmer](https://github.com/rmellmer) and [Eric Sowell](https://github.com/ericsowell). 
+
+**Original Authors**: Ryan Mellmer and Eric Sowell  
+**Current Maintainer**: [ctruett](https://github.com/ctruett)
+
+### Major Changes in This Fork
+- Converted from header-based ranges to line-based ranges
+- Changed syntax from `[[Note#Header1..Header2]]` to `[[Note:10..25]]`
+- Added Bible verse reference support (e.g., `![[I Peter 1:3-5]]`)
+- Updated to use `:` separator instead of `#`
+
 ![demo](./docs/demo-2.gif)
 
 ## Usage

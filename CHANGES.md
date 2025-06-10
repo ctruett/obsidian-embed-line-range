@@ -2,6 +2,15 @@
 
 This document summarizes all the changes made to convert the Obsidian Embed Line Range plugin from header-based ranges to line-based ranges with colon separator.
 
+## Credits
+
+This plugin is based on the original [Obsidian Link Range](https://github.com/rmellmer/obsidian-link-range) plugin by Ryan Mellmer and Eric Sowell.
+
+**Original Authors**: Ryan Mellmer and Eric Sowell  
+**Current Maintainer**: ctruett
+
+The original plugin provided header-based range functionality. This fork has been extensively modified to provide line-based ranges and Bible verse references.
+
 ## Major Changes
 
 ### 1. Link Syntax Transformation

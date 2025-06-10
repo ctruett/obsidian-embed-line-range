@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-embed-line-range",
-	"version": "3.0.0",
-	"description": "This Obsidian plugin brings line range embed and link support to Obsidian.",
+	"version": "3.0.1",
+	"description": "This Obsidian plugin brings line range embed and link support to Obsidian. Based on original work by Ryan Mellmer and Eric Sowell.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -10,7 +10,7 @@
 		"postinstall": "patch-package"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "ctruett",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
