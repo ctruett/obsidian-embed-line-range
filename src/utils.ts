@@ -4,16 +4,14 @@ import * as path from 'path';
 
 export interface ParsedLink {
 	note: string;
-	h1: string;
-	h2?: string;
+	startLine: number;
+	endLine?: number;
 	altText?: string;
 	file?: TFile;
-	h1Line?: number;
-	h2Line?: number;
 }
 
 export function checkLinkText(href: string, settings: LinkRangeSettings): ParsedLink | null {
-	const linkRegex = /([^#|]*)#?([^#|]*)?\|?(.*)?/;
+	const linkRegex = /([^:|]*):\s*([^:|]*)?\|?(.*)?/;
 
 	const matches = linkRegex.exec(href);
 
@@ -21,12 +19,26 @@ export function checkLinkText(href: string, settings: LinkRangeSettings): Parsed
 		return null;
 	}
 
-	const header = matches[2];
-	const split = header.split(settings.headingSeparator);
+	const lineRange = matches[2];
+	const split = lineRange.split(settings.lineSeparator);
 
 	const note = matches[1];
-	const h1 = split[0];
-	const h2 = split[1];
+	
+	// Parse line numbers - just parse the number directly
+	const parseLineNumber = (str: string): number | null => {
+		const trimmed = str.trim();
+		const num = parseInt(trimmed, 10);
+		return isNaN(num) ? null : num;
+	};
+
+	const startLine = parseLineNumber(split[0]);
+	const endLineParsed = split[1] ? parseLineNumber(split[1]) : null;
+
+	if (startLine === null || (split[1] && endLineParsed === null)) {
+		return null;
+	}
+
+	const endLine = endLineParsed === null ? undefined : endLineParsed;
 
 	let altText = undefined;
 
@@ -36,17 +48,17 @@ export function checkLinkText(href: string, settings: LinkRangeSettings): Parsed
 	else {
 		const pattern = findPatternForFile(note, settings);
 		const baseNote = path.basename(note)
-		const headingVisual = pattern.headingVisual === '' ? '#' : pattern.headingVisual;
-		const headingSeparatorVisual = pattern.headingSeparatorVisual === '' ? settings.headingSeparator : pattern.headingSeparatorVisual;
+		const lineVisual = pattern.lineVisual === '' ? ':' : pattern.lineVisual;
+		const lineSeparatorVisual = pattern.lineSeparatorVisual === '' ? settings.lineSeparator : pattern.lineSeparatorVisual;
 
-		if (h2 !== undefined) {
-			altText = `${baseNote}${headingVisual}${h1}${headingSeparatorVisual}${h2}`
+		if (endLine !== undefined) {
+			altText = `${baseNote}${lineVisual}${startLine}${lineSeparatorVisual}${endLine}`
 		}
 		else {
-			altText = `${baseNote}${headingVisual}${h1}`
+			altText = `${baseNote}${lineVisual}${startLine}`
 		}
 	}
-	return { note, h1, h2, altText }
+	return { note, startLine, endLine, altText }
 }
 
 export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSettings, isEmbed=false, hrefField = "data-href"): ParsedLink | null {
@@ -60,16 +72,16 @@ export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSe
 
 	const alt = linkHTML.getAttribute("alt")
 
-	if (!res || app.metadataCache == null) {
+	if (!res) {
 		return null;
 	}
 
 	// non-standard alt text, must be user provided via "|"
-	if (alt != null && !alt.contains(res.note)) {
+	if (alt != null && !alt.includes(res.note)) {
 		res.altText = alt
 	}
 
-	if (!isEmbed && !linkHTML.innerText.contains(res.note)) {
+	if (!isEmbed && !linkHTML.innerText.includes(res.note)) {
 		res.altText = linkHTML.innerText
 	}
 
@@ -77,7 +89,7 @@ export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSe
 	const partialPath = res.note + ".md"
 	const basePart = path.basename(res.note)
 	const file : TFile | undefined = app.vault.getMarkdownFiles().filter(
-		x => x.basename == basePart && x.path.endsWith(partialPath)
+		(x: TFile) => x.basename == basePart && x.path.endsWith(partialPath)
 	).first()
 
 	if (!file) {
@@ -86,41 +98,19 @@ export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSe
 	
 	res.file = file
 
-	const meta = app.metadataCache.getFileCache(file);
-
-	if (meta == undefined || meta?.headings == undefined) {
-		return null;
-	}
-
-	const h1Line = meta?.headings?.filter(
-		h => h.heading == res.h1
-	).first()?.position.start.line;
-
-	let h2Line = null;
-
-	if (settings.endInclusive) {
-		let h2LineIndex = meta?.headings?.findIndex(
-			h => h.heading == res.h2
-		)
-
-		if (meta?.headings?.length > h2LineIndex) {
-			h2LineIndex += 1
+	// Line numbers are already parsed and ready to use
+	// Convert from 1-based to 0-based indexing for internal use
+	res.startLine = res.startLine - 1;
+	if (res.endLine !== undefined) {
+		if (settings.endInclusive) {
+			// Keep end line as-is for inclusive range
+		} else {
+			// Subtract 1 for exclusive range
+			res.endLine = res.endLine - 1;
 		}
-
-		h2Line = meta?.headings?.at(h2LineIndex)?.position.end.line
+		// Convert to 0-based indexing
+		res.endLine = res.endLine - 1;
 	}
-	else {
-		h2Line = meta?.headings?.filter(
-			h => h.heading == res.h2
-		).first()?.position.end.line;
-	}
-
-	if (h1Line == undefined) {
-		return null;
-	}
-
-	res.h1Line = h1Line
-	res.h2Line = h2Line
 
 	return res;
 }
@@ -128,6 +118,7 @@ export function checkLink(app :App, linkHTML: HTMLElement, settings: LinkRangeSe
 export function postProcessorUpdate(app: App) {
 	for (const leaf of app.workspace.getLeavesOfType('markdown')) {
 		// Actually of type MarkdownView, but casting to any because the TS types don't have previewMode.renderer or editor.cm... 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const view = leaf.view as any;
 
 		view.previewMode.renderer.clear();
@@ -138,9 +129,7 @@ export function postProcessorUpdate(app: App) {
 }
 
 export function findPatternForFile(fileName: string, settings: LinkRangeSettings) : Pattern {
-	const file = app.vault.getFiles().find((file) => file.basename === fileName);
-
-	let pattern = [...settings.patterns].reverse().find((pattern: Pattern) => file?.path.startsWith(pattern.path))
+	let pattern = [...settings.patterns].reverse().find((pattern: Pattern) => fileName.startsWith(pattern.path))
 	if (!pattern) {
 		pattern = settings.getDefaultPattern();
 	}

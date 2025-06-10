@@ -3,13 +3,13 @@ import { App, PluginSettingTab, Setting, ButtonComponent } from "obsidian";
 import { postProcessorUpdate } from "./utils";
 
 export interface Pattern {
-	headingVisual: string;
-	headingSeparatorVisual: string;
+	lineVisual: string;
+	lineSeparatorVisual: string;
 	path: string;
 }
 
 export interface LinkRangeSettings {
-	headingSeparator: string;
+	lineSeparator: string;
 	endInclusive: boolean;
 	altFormat: string; // This is for backwards compatibility
 	settingsVersion: string;
@@ -18,16 +18,16 @@ export interface LinkRangeSettings {
 }
 
 export const DEFAULT_SETTINGS: LinkRangeSettings = {
-	headingSeparator: '..',
+	lineSeparator: '..',
 	endInclusive: true,
 	altFormat: '',
-	settingsVersion: 'v2',
-	patterns: [{ headingVisual: '..', headingSeparatorVisual: '-', path: '/' }],
+	settingsVersion: 'v3',
+	patterns: [{ lineVisual: ':', lineSeparatorVisual: '-', path: '/' }],
 
 	getDefaultPattern() {
 		const first = this.patterns[0];
 		if (!first) {
-			return { headingVisual: ':', headingSeparatorVisual: '-', path: '/' }
+			return { lineVisual: ':', lineSeparatorVisual: '-', path: '/' }
 		}
 
 		return first;
@@ -49,7 +49,7 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 		const hasV1Settings = stgs.altFormat != undefined && stgs.altFormat.length > 0;
 		if (hasV1Settings) {	
 
-			// default altFormat string: `$note:$h1-$h2`
+			// default altFormat string: `$note:$h1-$h2` (legacy heading format)
 			const altFormat = stgs.altFormat;
 			const indexOfNote = altFormat.indexOf('$note');
 			const indexOfH1 = altFormat.indexOf('$h1');
@@ -61,7 +61,7 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 				const firstValue = altFormat.substring('$note'.length, indexOfH1);
 				const secondValue = altFormat.substring(indexOfH1 + '$h1'.length, indexOfH2);
 
-				stgs.patterns = [{ headingVisual: firstValue, headingSeparatorVisual: secondValue, path: '' }]
+				stgs.patterns = [{ lineVisual: firstValue, lineSeparatorVisual: secondValue, path: '' }]
 			}
 
 			stgs.altFormat = '';
@@ -77,20 +77,20 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 		this.createH2('Settings for link-range plugin')
 
 		new Setting(containerEl)
-			.setName('Heading Separator')
-			.setDesc('Defines the separator to be used to define a link heading range. Defaults to ".." (e.g. [[Note Name#h1..h2]])')
+			.setName('Line Separator')
+			.setDesc('Defines the separator to be used to define a link line range. Defaults to ".." (e.g. [[Note Name:10..25]])')
 			.addText(text => text
 				.setPlaceholder('Enter a separator string (defaults to ..)')
-				.setValue(this.plugin.settings.headingSeparator)
+				.setValue(this.plugin.settings.lineSeparator)
 				.onChange(async (value) => {
-					this.plugin.settings.headingSeparator = value;
+					this.plugin.settings.lineSeparator = value;
 					await this.plugin.saveSettings();
 					postProcessorUpdate(this.app)
 				}));
 
 		new Setting(containerEl)
 			.setName('End Inclusive')
-			.setDesc('Whether or not the end heading should be inclusive or exclusive')
+			.setDesc('Whether or not the end line should be inclusive or exclusive')
 			.addToggle(bool => bool
 				.setValue(this.plugin.settings.endInclusive)
 				.onChange(async (value) => {
@@ -101,7 +101,7 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 	
 		new Setting(this.containerEl)
 			.setName("Add a New Visual Pattern")
-			.setDesc("Add new pattern to match files in a directory. The first value will change the visual for the heading in a link. The second value will change the visual for separator. The third specifies the folder in which the files must be to match. The first match, starting bottom up, will be applied. Therefore, the first is the default pattern.")
+			.setDesc("Add new pattern to match files in a directory. The first value will change the visual for the line prefix in a link. The second value will change the visual for separator. The third specifies the folder in which the files must be to match. The first match, starting bottom up, will be applied. Therefore, the first is the default pattern.")
 			.addButton((button: ButtonComponent) => {
 				button
 					.setTooltip("Add new pattern to match files in a directory.")
@@ -109,8 +109,8 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 					.setCta()
 					.onClick(() => {
 						this.plugin.settings.patterns.push({
-							headingVisual: '',
-							headingSeparatorVisual: '',
+							lineVisual: '',
+							lineSeparatorVisual: '',
 							path: ''
 						});
 						this.plugin.saveSettings();
@@ -122,18 +122,18 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 				(pattern, index) => {
 					const s = new Setting(this.containerEl)
 					.addText(text => text
-						.setPlaceholder('Enter a heading override')
-						.setValue(pattern.headingVisual)
+						.setPlaceholder('Enter a line prefix override')
+						.setValue(pattern.lineVisual)
 						.onChange(async (value) => {
-							pattern.headingVisual = value;
+							pattern.lineVisual = value;
 							await this.plugin.saveSettings();
 							postProcessorUpdate(this.app)
 						}))
 					.addText(text => text
 						.setPlaceholder('Enter a separator override')
-						.setValue(pattern.headingSeparatorVisual)
+						.setValue(pattern.lineSeparatorVisual)
 						.onChange(async (value) => {
-							pattern.headingSeparatorVisual = value;
+							pattern.lineSeparatorVisual = value;
 							await this.plugin.saveSettings();
 							postProcessorUpdate(this.app)
 						}))

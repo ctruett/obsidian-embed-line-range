@@ -39,24 +39,24 @@ export default class LinkRange extends Plugin {
 			
 			// intercept page-preview plugin
 			const uninstaller = around(pagePreviewPlugin.instance.constructor.prototype, {
-				onHoverLink(old: Function) {
+				onHoverLink(old: (...args: unknown[]) => unknown) {
 					return function (options: { event: MouseEvent }, ...args: unknown[]) {
 						return old.call(this, options, ...args);
 					};
 				},
-				onLinkHover(old: Function) {
+				onLinkHover(old: (...args: unknown[]) => unknown) {
 					return function (
-						parent: any,
+						parent: unknown,
 						targetEl: HTMLElement,
 						linkText: string,
 						path: string,
-						state: any,
+						state: unknown,
 						...args: unknown[]
 					) {
 						// parse link using the added range-href field
 						const res = checkLink(this.app, targetEl, settings, false, "range-href")
 						if (res !== null) {
-							old.call(this, parent, targetEl, res.note, path, {scroll:res.h1Line}, ...args)
+							old.call(this, parent, targetEl, res.note, path, {scroll:res.startLine}, ...args)
 						} else {
 							old.call(this, parent, targetEl, linkText, path, state, ...args);
 						}

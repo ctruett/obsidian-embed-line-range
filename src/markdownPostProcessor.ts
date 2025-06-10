@@ -16,9 +16,15 @@ export function linkRangePostProcessor(app: App, el: HTMLElement, ctx: MarkdownP
 			if (res.altText) {
 				htmlLink.setText(res.altText)
 			}
-			htmlLink.setAttribute("href", res.note + "#" + res.h1);
-			htmlLink.setAttribute("data-href", res.note + "#" + res.h1);
-			htmlLink.setAttribute("range-href", res.note + "#" + res.h1 + settings.headingSeparator + res.h2);
+			const lineRef = (res.startLine + 1).toString(); // Convert back to 1-based for display
+			htmlLink.setAttribute("href", res.note + ":" + lineRef);
+			htmlLink.setAttribute("data-href", res.note + ":" + lineRef);
+			if (res.endLine !== undefined) {
+				const endLineRef = (res.endLine + 1).toString(); // Convert back to 1-based for display
+				htmlLink.setAttribute("range-href", res.note + ":" + lineRef + settings.lineSeparator + endLineRef);
+			} else {
+				htmlLink.setAttribute("range-href", res.note + ":" + lineRef);
+			}
 		}
 	});
 

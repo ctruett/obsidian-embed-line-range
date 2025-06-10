@@ -1,4 +1,4 @@
-import { App, MarkdownRenderer, setIcon, TFile } from "obsidian";
+import { App, MarkdownRenderer, setIcon } from "obsidian";
 import { LinkRangeSettings } from "./settings";
 import { checkLink } from "./utils";
 
@@ -7,7 +7,7 @@ export async function replaceEmbed(app: App, embed: Node, settings: LinkRangeSet
 
 	const res = checkLink(app, embedHtml, settings, true, "src");
 
-	const isLinkRange = res !== null && res.h2 !== undefined;
+	const isLinkRange = res !== null && res.endLine !== undefined;
 	const file = res?.file
 	if (isLinkRange && file !== undefined) {
 		const { vault } = app;
@@ -46,7 +46,7 @@ export async function replaceEmbed(app: App, embed: Node, settings: LinkRangeSet
 			const leaf = app.workspace.getMostRecentLeaf();
 			leaf?.openFile(file, {
 				state: {
-					scroll: res.h1Line
+					scroll: res.startLine
 				}
 			});
 		})
@@ -54,12 +54,18 @@ export async function replaceEmbed(app: App, embed: Node, settings: LinkRangeSet
 		const fileContent = await vault.cachedRead(file);
 
 		let lines = fileContent.split("\n");
-		lines = lines.slice(res.h1Line, res.h2Line);
+		
+		// Extract lines based on the specified range
+		const startIdx = Math.max(0, res.startLine);
+		const endIdx = res.endLine !== undefined ? Math.min(lines.length, res.endLine + 1) : startIdx + 1;
+		
+		lines = lines.slice(startIdx, endIdx);
 
 		const contentDiv = embedHtml.createDiv({
 			cls: ["markdown-embed-content"]
 		})
 
-		MarkdownRenderer.renderMarkdown(lines.join("\n"), contentDiv, "", null!)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		MarkdownRenderer.renderMarkdown(lines.join("\n"), contentDiv, "", null as any)
 	}				
 }

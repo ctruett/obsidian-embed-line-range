@@ -14,7 +14,7 @@ class CharacterOverwriteWidget extends WidgetType {
     }
 
     toDOM() {
-        let el = document.createElement("span");
+        const el = document.createElement("span");
         el.innerText = this.char;
         el.style.textDecoration = 'underline';
         return el;
@@ -31,11 +31,11 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
             
             constructor(view: EditorView) {
                 this.decorations = this.buildDecorations(view, null);
-                this.lastLocation = { from: 0, to: 0 };;
+                this.lastLocation = { from: 0, to: 0 };
             }
 
             update(update: ViewUpdate) {
-                let currentLocation = {
+                const currentLocation = {
                     from: update.state.selection.ranges[0].from,
                     to: update.state.selection.ranges[0].to
                 };
@@ -44,7 +44,7 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
                 }
                 else {
                     // isRepeatUpdate - avoid repeated updates and renders
-                    let isRepeatUpdate = this.lastLocation.from == currentLocation.from && this.lastLocation.to === currentLocation.to;
+                    const isRepeatUpdate = this.lastLocation.from == currentLocation.from && this.lastLocation.to === currentLocation.to;
                     if (update.state.selection.ranges.length > 0 && !isRepeatUpdate) {
                         this.decorations = this.buildDecorations(update.view, currentLocation);
                     }
@@ -53,7 +53,7 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
             }
 
             buildDecorations(view: EditorView, location: { from: number, to: number } | null): DecorationSet {
-                let builder = new RangeSetBuilder<Decoration>();
+                const builder = new RangeSetBuilder<Decoration>();
 
                 const lastPassDecoratedRanges: Array<{from: number, to: number}> = this.decoratedRanges;
                 this.decoratedRanges = [];
@@ -63,7 +63,7 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
                         return false;
                     }
 
-                    for (let i in lastPassDecoratedRanges) {
+                    for (const i in lastPassDecoratedRanges) {
                         const rng = lastPassDecoratedRanges[i];
 
                         if (rng.from == nodeStart && index >= rng.from && index <= rng.to) {
@@ -73,7 +73,7 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
                     return false;
                 }
 
-                for (let {from, to} of view.visibleRanges) {
+                for (const {from, to} of view.visibleRanges) {
 
                     syntaxTree(view.state).iterate({
                         from,
@@ -93,9 +93,9 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
                                 const isMDUrl = props.has('url');
                                 
                                 if (isLink && !isAlias && !isPipe || isMDUrl) {
-                                    let linkText = view.state.doc.sliceString(node.from, node.to);
+                                    const linkText = view.state.doc.sliceString(node.from, node.to);
                                     
-                                    const indexOfHeaderMarker = linkText.indexOf('#');
+                                    const indexOfHeaderMarker = linkText.indexOf(':');
                                     const indexOfHeaderMarkerInDoc = indexOfHeaderMarker + node.from;
                                     if (indexOfHeaderMarkerInDoc >= node.from && indexOfHeaderMarkerInDoc <= node.to) {
                                         if (!inLastPass(node.from - 2, location?.from)) {
@@ -103,22 +103,22 @@ export function buildCMViewPlugin(app: App, settings: LinkRangeSettings) {
                                             const fileName = linkText.substring(0, indexOfHeaderMarker);
                                             const pattern = findPatternForFile(fileName, settings);                                            
                                             
-                                            // Overrides the heading character ('#') to what is specified in settings
-                                            if (pattern.headingVisual !== '') {
-                                                let overrideP2HWidget = Decoration.widget({
-                                                    widget: new CharacterOverwriteWidget(pattern.headingVisual),
+                                            // Overrides the line prefix character (':') to what is specified in settings
+                                            if (pattern.lineVisual !== '') {
+                                                const overrideP2HWidget = Decoration.widget({
+                                                    widget: new CharacterOverwriteWidget(pattern.lineVisual),
                                                 });
                                                 builder.add(indexOfHeaderMarkerInDoc, indexOfHeaderMarkerInDoc + 1, overrideP2HWidget);  
                                             }
 
-                                            // Overrides the header separator character to what is specified in settings
-                                            if (pattern.headingSeparatorVisual !== '') {
-                                                const indexOfRangeMarker = linkText.indexOf(settings.headingSeparator) + node.from;
+                                            // Overrides the line separator character to what is specified in settings
+                                            if (pattern.lineSeparatorVisual !== '') {
+                                                const indexOfRangeMarker = linkText.indexOf(settings.lineSeparator) + node.from;
                                                 if (indexOfRangeMarker >= node.from && indexOfRangeMarker <= node.to) {
-                                                    let overrideH2HWidget = Decoration.widget({
-                                                        widget: new CharacterOverwriteWidget(pattern.headingSeparatorVisual),
+                                                    const overrideH2HWidget = Decoration.widget({
+                                                        widget: new CharacterOverwriteWidget(pattern.lineSeparatorVisual),
                                                     });
-                                                    builder.add(indexOfRangeMarker, indexOfRangeMarker + settings.headingSeparator.length, overrideH2HWidget);
+                                                    builder.add(indexOfRangeMarker, indexOfRangeMarker + settings.lineSeparator.length, overrideH2HWidget);
                                                 }
                                             }
                                         }
