@@ -1,6 +1,6 @@
 # Changes Summary: Header Ranges to Line Ranges
 
-This document summarizes all the changes made to convert the Obsidian Link Range plugin from header-based ranges to line-based ranges with colon separator.
+This document summarizes all the changes made to convert the Obsidian Embed Line Range plugin from header-based ranges to line-based ranges with colon separator.
 
 ## Major Changes
 

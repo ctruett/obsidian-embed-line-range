@@ -78,7 +78,7 @@ export class LinkRangeSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.createH2('Settings for link-range plugin')
+		this.createH2('Settings for embed-line-range plugin')
 
 		new Setting(containerEl)
 			.setName('Line Separator')

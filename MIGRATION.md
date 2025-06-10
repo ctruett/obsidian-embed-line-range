@@ -1,6 +1,6 @@
 # Migration Guide: Header Ranges to Line Ranges
 
-This document outlines the major changes made to convert the Obsidian Link Range plugin from header-based ranges to line-based ranges.
+This document outlines the major changes made to convert the Obsidian Embed Line Range plugin from header-based ranges to line-based ranges.
 
 ## Overview
 

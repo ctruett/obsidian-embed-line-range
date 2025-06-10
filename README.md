@@ -1,4 +1,4 @@
-# Obsidian Link Range
+# Obsidian Embed Line Range
 
 ![Obsidian Link Range Logo](https://user-images.githubusercontent.com/23059902/225677761-c36b01a6-6194-4d83-a130-a1d7561b8359.png)
 

@@ -1,9 +1,9 @@
 {
-	"id": "link-range",
-	"name": "Link Range",
+	"id": "embed-line-range",
+	"name": "Embed Line Range",
 	"version": "3.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This Obsidian plugin brings line range link support to Obsidian.",
+	"description": "This Obsidian plugin brings line range embed and link support to Obsidian.",
 	"author": "Ryan Mellmer and Eric Sowell",
 	"authorUrl": "https://ryanmellmer.com, https://ericsowell.com",
 	"isDesktopOnly": false
